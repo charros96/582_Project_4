@@ -118,7 +118,7 @@ def log_message(d):
     pass
 
 def order_asdict(order):
-    return {'sender_pk': order.sender_pk,'receiver_pk': order.receiver_pk, 'buy_currency': order.buy_currency, 'sell_currency': order.sell_currency, 'buy_amount': order.buy_amount, 'sell_amount': order.sell_amount, 'signature':order.signature}
+    return {'sender_pk': order.sender_pk,'receiver_pk': order.receiver_pk, 'buy_currency': order.buy_currency, 'sell_currency': order.sell_currency, 'buy_amount': order.buy_amount, 'sell_amount': order.sell_amount, 'signature':order.signature,'counterparty_id':order.counterparty_id}
 
 """ End of helper methods """
 
