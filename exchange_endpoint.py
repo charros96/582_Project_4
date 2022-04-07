@@ -49,40 +49,33 @@ def check_sig(payload,sig):
     return result
     
 def process_order(content):
-    order = content.get('payload')
-    signature = content.get('sig')
     
-    fields = ['sender_pk','receiver_pk','buy_currency','sell_currency','buy_amount','sell_amount']
-    order_obj = Order(**{f:order[f] for f in fields})
-    order_obj.signature = signature
-    g.session.add(order_obj)
-    g.session.commit()
     pass
 
 def fill_order(order,txes=[]):
     fields = ['sender_pk','receiver_pk','buy_currency','sell_currency','buy_amount','sell_amount']
-    order_obj = Order(**{f:order[f] for f in fields})
+    
     unfilled_db = g.session.query(Order).filter(Order.filled == None).all()
     for existing_order in unfilled_db:       
-        if existing_order.buy_currency == order_obj.sell_currency:
-            if existing_order.sell_currency == order_obj.buy_currency:
-                if (existing_order.sell_amount / existing_order.buy_amount) >= (order_obj.buy_amount/order_obj.sell_amount) :
+        if existing_order.buy_currency == order.sell_currency:
+            if existing_order.sell_currency == order.buy_currency:
+                if (existing_order.sell_amount / existing_order.buy_amount) >= (order.buy_amount/order.sell_amount) :
                     
                     existing_order.filled = datetime.now()
-                    order_obj.filled = datetime.now()
-                    existing_order.counterparty_id = order_obj.id
+                    order.filled = datetime.now()
+                    existing_order.counterparty_id = order.id
                     #existing_order.counterparty = order_obj
-                    order_obj.counterparty_id = existing_order.id
+                    order.counterparty_id = existing_order.id
                     #order_obj.counterparty = existing_order
-                    print(order_obj.counterparty_id)
+                    print(order.counterparty_id)
                     print(existing_order.counterparty_id)
                     g.session.commit()
-                    if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
-                        if (existing_order.buy_amount > order_obj.sell_amount):
+                    if (existing_order.buy_amount > order.sell_amount) | (order.buy_amount > existing_order.sell_amount) :
+                        if (existing_order.buy_amount > order.sell_amount):
                             parent = existing_order
-                            counter = order_obj
-                        if order_obj.buy_amount > existing_order.sell_amount:
-                            parent = order_obj
+                            counter = order
+                        if order.buy_amount > existing_order.sell_amount:
+                            parent = order
                             counter = existing_order
                         child = {}
                         child['sender_pk'] = parent.sender_pk
@@ -153,9 +146,16 @@ def trade():
         payload = content.get('payload')
         # TODO: Check the signature
         if check_sig(payload,sig):
-            process_order(content)
             order = content.get('payload')
-            fill_order(order)
+            signature = content.get('sig')
+    
+            fields = ['sender_pk','receiver_pk','buy_currency','sell_currency','buy_amount','sell_amount']
+            order_obj = Order(**{f:order[f] for f in fields})
+            order_obj.signature = signature
+            g.session.add(order_obj)
+            g.session.commit()
+            
+            fill_order(order_obj)
             g.session.commit()
         # TODO: Be sure to return jsonify(True) or jsonify(False) depending on if the method was successful
         return jsonify(True)
