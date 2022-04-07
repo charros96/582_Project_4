@@ -77,7 +77,7 @@ def fill_order(order,txes=[]):
                     
                     g.session.commit()
                     break
-                break
+                
             
         
     if matched == True:
@@ -98,6 +98,7 @@ def fill_order(order,txes=[]):
             child_obj = Order(**{f:child[f] for f in fields})
             child_obj.creator_id = parent.id
             g.session.add(child_obj)
+            g.session.commit()
 
     g.session.commit()
         
