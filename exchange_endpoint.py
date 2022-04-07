@@ -75,6 +75,7 @@ def fill_order(order,txes=[]):
                     order_obj.counterparty_id = existing_order.id
                     #order_obj.counterparty = existing_order
                     print(order_obj.counterparty_id)
+                    print(existing_order.counterparty_id)
                     g.session.commit()
                     if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
                         if (existing_order.buy_amount > order_obj.sell_amount):
@@ -155,7 +156,7 @@ def trade():
             process_order(content)
             order = content.get('payload')
             fill_order(order)
-        
+            g.session.commit()
         # TODO: Be sure to return jsonify(True) or jsonify(False) depending on if the method was successful
         return jsonify(True)
 
