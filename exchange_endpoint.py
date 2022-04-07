@@ -33,22 +33,16 @@ def shutdown_session(response_or_exc):
 
 def check_sig(payload,sig):
     
-        #print(sig)
-        #print(payload)
     platform = payload.get('platform')
-        #message = payload.get('message')
+
     pk = payload.get('sender_pk')
     result = False
     if platform == "Ethereum":
-        #print("Ethereum")
-        #print(json.dumps(payload))
-        #print(type(json.dumps(payload)))
         eth_encoded_msg = eth_account.messages.encode_defunct(text =json.dumps(payload))
         
         if eth_account.Account.recover_message(eth_encoded_msg,signature=sig) == pk:
                 result = True
     elif platform == "Algorand":
-            #algo_sig_str = algosdk.util.sign_bytes(payload.encode('utf-8'),algo_sk)
         algo_encoded_msg = json.dumps(payload).encode('utf-8')
         if algosdk.util.verify_bytes(algo_encoded_msg,sig,pk):
             result = True
@@ -61,8 +55,6 @@ def process_order(content):
     fields = ['sender_pk','receiver_pk','buy_currency','sell_currency','buy_amount','sell_amount']
     order_obj = Order(**{f:order[f] for f in fields})
     order_obj.signature = signature
-    #print(order_obj)
-    #unfilled_db = g.session.query(Order).filter(Order.filled == None).all()
     g.session.add(order_obj)
     g.session.commit()
     pass
@@ -79,35 +71,31 @@ def fill_order(order,txes=[]):
                     existing_order.filled = datetime.now()
                     order_obj.filled = datetime.now()
                     existing_order.counterparty_id = order_obj.id
-                    #existing_order.counterparty = order_obj
-                    order_obj.counterparty_id = existing_order.id
-                    #order_obj.counterparty = existing_order
-                    g.session.commit()
-                    if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
-                        if (existing_order.buy_amount > order_obj.sell_amount):
-                            parent = existing_order
-                            counter = order_obj
-                        if order_obj.buy_amount > existing_order.sell_amount:
-                            parent = order_obj
-                            counter = existing_order
-                        child = {}
-                        child['sender_pk'] = parent.sender_pk
-                        child['receiver_pk'] = parent.receiver_pk
-                        child['buy_currency'] = parent.buy_currency
-                        child['sell_currency'] = parent.sell_currency
-                        child['buy_amount'] = parent.buy_amount-counter.sell_amount
-                        child['sell_amount'] = (parent.buy_amount-counter.sell_amount)*(parent.sell_amount/parent.buy_amount)  
-                        child_obj = Order(**{f:child[f] for f in fields})
-                        child_obj.creator_id = parent.id
-                        g.session.add(child_obj)
-                        
-                        g.session.commit()
-                        break
                     
+                    order_obj.counterparty_id = existing_order.id
+                    
+                    g.session.commit()
                     break
-
-    
+    if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
+        if (existing_order.buy_amount > order_obj.sell_amount):
+            parent = existing_order
+            counter = order_obj
+        if order_obj.buy_amount > existing_order.sell_amount:
+            parent = order_obj
+            counter = existing_order
+        child = {}
+        child['sender_pk'] = parent.sender_pk
+        child['receiver_pk'] = parent.receiver_pk
+        child['buy_currency'] = parent.buy_currency
+        child['sell_currency'] = parent.sell_currency
+        child['buy_amount'] = parent.buy_amount-counter.sell_amount
+        child['sell_amount'] = (parent.buy_amount-counter.sell_amount)*(parent.sell_amount/parent.buy_amount)  
+        child_obj = Order(**{f:child[f] for f in fields})
+        child_obj.creator_id = parent.id
+        g.session.add(child_obj)
+        
     g.session.commit()
+        
     pass
   
 def log_message(d):
@@ -162,9 +150,6 @@ def trade():
             process_order(content)
             order = content.get('payload')
             fill_order(order)
-        # TODO: Add the order to the database
-        
-        # TODO: Fill the order
         
         # TODO: Be sure to return jsonify(True) or jsonify(False) depending on if the method was successful
         return jsonify(True)
