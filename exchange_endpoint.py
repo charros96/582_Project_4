@@ -78,8 +78,8 @@ def fill_order(order,txes=[]):
                     g.session.commit()
                     break
                 break
-            break
-        break
+            
+        
     if matched == True:
         if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
             if (existing_order.buy_amount > order_obj.sell_amount):
