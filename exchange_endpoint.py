@@ -67,12 +67,14 @@ def fill_order(order,txes=[]):
         if existing_order.buy_currency == order_obj.sell_currency:
             if existing_order.sell_currency == order_obj.buy_currency:
                 if (existing_order.sell_amount / existing_order.buy_amount) >= (order_obj.buy_amount/order_obj.sell_amount) :
+                    
                     existing_order.filled = datetime.now()
                     order_obj.filled = datetime.now()
                     existing_order.counterparty_id = order_obj.id
+                    #existing_order.counterparty = order_obj
                     order_obj.counterparty_id = existing_order.id
-                    print(order.timestamp)
-                    print(order.counterparty[0].timestamp)
+                    #order_obj.counterparty = existing_order
+                    print(order_obj.counterparty_id)
                     g.session.commit()
                     if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
                         if (existing_order.buy_amount > order_obj.sell_amount):
@@ -91,8 +93,10 @@ def fill_order(order,txes=[]):
                         child_obj = Order(**{f:child[f] for f in fields})
                         child_obj.creator_id = parent.id
                         g.session.add(child_obj)
+                        
                         g.session.commit()
                         break
+                    
                     break
 
     g.session.commit()
