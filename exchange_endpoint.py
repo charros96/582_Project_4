@@ -74,7 +74,7 @@ def fill_order(order,txes=[]):
                     existing_order.counterparty_id = order_obj.id
                     
                     order_obj.counterparty_id = existing_order.id
-                    
+                    print(order_obj.counterparty_id)
                     g.session.commit()
                     break
                 
