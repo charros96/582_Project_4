@@ -63,11 +63,12 @@ def fill_order(order,txes=[]):
     fields = ['sender_pk','receiver_pk','buy_currency','sell_currency','buy_amount','sell_amount']
     order_obj = Order(**{f:order[f] for f in fields})
     unfilled_db = g.session.query(Order).filter(Order.filled == None).all()
+    matched = False
     for existing_order in unfilled_db:       
         if existing_order.buy_currency == order_obj.sell_currency:
             if existing_order.sell_currency == order_obj.buy_currency:
                 if (existing_order.sell_amount / existing_order.buy_amount) >= (order_obj.buy_amount/order_obj.sell_amount) :
-                    
+                    matched = True
                     existing_order.filled = datetime.now()
                     order_obj.filled = datetime.now()
                     existing_order.counterparty_id = order_obj.id
@@ -76,24 +77,25 @@ def fill_order(order,txes=[]):
                     
                     g.session.commit()
                     break
-    if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
-        if (existing_order.buy_amount > order_obj.sell_amount):
-            parent = existing_order
-            counter = order_obj
-        if order_obj.buy_amount > existing_order.sell_amount:
-            parent = order_obj
-            counter = existing_order
-        child = {}
-        child['sender_pk'] = parent.sender_pk
-        child['receiver_pk'] = parent.receiver_pk
-        child['buy_currency'] = parent.buy_currency
-        child['sell_currency'] = parent.sell_currency
-        child['buy_amount'] = parent.buy_amount-counter.sell_amount
-        child['sell_amount'] = (parent.buy_amount-counter.sell_amount)*(parent.sell_amount/parent.buy_amount)  
-        child_obj = Order(**{f:child[f] for f in fields})
-        child_obj.creator_id = parent.id
-        g.session.add(child_obj)
-        
+    if matched == True:
+        if (existing_order.buy_amount > order_obj.sell_amount) | (order_obj.buy_amount > existing_order.sell_amount) :
+            if (existing_order.buy_amount > order_obj.sell_amount):
+                parent = existing_order
+                counter = order_obj
+            if order_obj.buy_amount > existing_order.sell_amount:
+                parent = order_obj
+                counter = existing_order
+            child = {}
+            child['sender_pk'] = parent.sender_pk
+            child['receiver_pk'] = parent.receiver_pk
+            child['buy_currency'] = parent.buy_currency
+            child['sell_currency'] = parent.sell_currency
+            child['buy_amount'] = parent.buy_amount-counter.sell_amount
+            child['sell_amount'] = (parent.buy_amount-counter.sell_amount)*(parent.sell_amount/parent.buy_amount)  
+            child_obj = Order(**{f:child[f] for f in fields})
+            child_obj.creator_id = parent.id
+            g.session.add(child_obj)
+
     g.session.commit()
         
     pass
